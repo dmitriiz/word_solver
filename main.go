@@ -5,9 +5,31 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"slices"
 	"strings"
 )
+
+type WordStat struct {
+	stat map[rune]int
+}
+
+func (ws WordStat) SubsetOf(other WordStat) bool {
+	for letter, count := range ws.stat {
+		if other.stat[letter] < count {
+			return false
+		}
+	}
+	return true
+}
+
+func buildWordStat(word string) WordStat {
+	stat := make(map[rune]int)
+	for _, letter := range word {
+		stat[letter]++
+	}
+	return WordStat{
+		stat: stat,
+	}
+}
 
 func readLetters(reader *bufio.Reader) string {
 	fmt.Println("Please type letters to use:")
@@ -30,30 +52,17 @@ func loadWords() []string {
 func filterWords(words []string, letters string) []string {
 	result := make([]string, 0)
 	n := len(letters)
-	s := wordStat(letters)
+	s := buildWordStat(letters)
 	for _, word := range words {
-		if len(word) != n {
+		if len(word) > n || len(word) < 3 {
 			continue
 		}
-		stat := wordStat(word)
-		if stat == s {
+		stat := buildWordStat(word)
+		if stat.SubsetOf(s) {
 			result = append(result, word)
 		}
 	}
 	return result
-}
-
-func wordStat(word string) string {
-	stat := make(map[rune]int)
-	for _, letter := range word {
-		stat[letter]++
-	}
-	data := make([]string, 0, len(stat))
-	for letter, count := range stat {
-		data = append(data, fmt.Sprintf("%c:%d", letter, count))
-	}
-	slices.Sort(data)
-	return strings.Join(data, ",")
 }
 
 func main() {
